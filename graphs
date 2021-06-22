@@ -1,1 +1,303 @@
-fjfjffj
+# include <iostream>
+# include <vector>
+
+using namespace std;
+
+class Rib
+{
+
+public:
+
+    int p1,p2;
+
+    bool checked;
+
+    bool oneway;
+
+    void Set(int point1,int point2,bool ow);
+
+    void SwapPoints();
+
+    void Print();
+};
+
+void Rib::Set(int point1,int point2,bool ow = false)
+{
+    p1 = point1;
+    p2 = point2;
+
+    checked = false;
+    oneway = ow;
+}
+
+void Rib::SwapPoints()
+{
+    swap(p1,p2);
+}
+
+void Rib::Print()
+{
+    cout<<p1<<" "<<p2;
+}
+
+bool AreEqualRibs(Rib r1,Rib r2)
+{
+    if(r1.p1 == r2.p1 and r1.p2 == r2.p2) return true;
+    return false;
+}
+
+class Graph
+{
+
+public:
+
+    Graph();
+
+    int CurrentPoint;
+
+    vector <Rib> Ribs;
+    vector <Rib> Path;
+    vector <Rib> OneWayRibs;
+
+    vector <int> PathPoints;
+
+    void AddRib(int p1,int p2,bool ow = false);
+
+    void PrintPath();
+    void PrintPathPoints();
+
+    bool IsCanBeConnectedFirst(Rib r);
+    bool IsCanBeConnectedFirstSwapped(Rib r);
+
+    bool IsCanBeConnected(Rib r);
+    bool IsCanBeConnectedSwapped(Rib r);
+
+    bool ConnectFirst(Rib &r);
+    bool ConnectFirstSwapped(Rib &r);
+
+    bool Connect(Rib &r);
+    bool ConnectSwapped(Rib &r);
+
+    bool IsFull();
+    bool IsContainsAllOneWayRibs();
+};
+
+Graph::Graph()
+{
+    CurrentPoint = 0;
+}
+
+void Graph::AddRib(int p1,int p2,bool ow)
+{
+    Rib r;
+
+    r.Set(p1,p2,ow);
+
+    if(ow == true) OneWayRibs.push_back(r);
+
+    Ribs.push_back(r);
+}
+
+void Graph::PrintPath()
+{
+    for(int i=0;i<Path.size();i++) {Path[i].Print(); cout<<endl;}
+}
+
+void Graph::PrintPathPoints()
+{
+    for(int i=0;i<Path.size();i++)
+    {
+        if(i == 0) {PathPoints.push_back(Path[i].p1); PathPoints.push_back(Path[i].p2);}
+        else PathPoints.push_back(Path[i].p2);
+    }
+
+    for(int i=0;i<PathPoints.size();i++)
+    {
+        if(i != PathPoints.size()-1) cout<<PathPoints[i]<<"-->";
+        else cout<<PathPoints[i];
+    }
+}
+
+bool Graph::IsCanBeConnectedFirst(Rib r)
+{
+    return CurrentPoint == 0;
+}
+
+bool Graph::IsCanBeConnectedFirstSwapped(Rib r)
+{
+    return CurrentPoint == 0;
+}
+
+bool Graph::IsCanBeConnected(Rib r)
+{
+    return !r.checked and r.p1 == CurrentPoint;
+}
+
+bool Graph::IsCanBeConnectedSwapped(Rib r)
+{
+    return !r.checked and r.p2 == CurrentPoint;
+}
+
+bool Graph::ConnectFirst(Rib &r)
+{
+    if(IsCanBeConnectedFirst(r))
+    {
+        r.checked = true;
+
+        CurrentPoint = r.p2;
+
+        return true;
+    }
+
+    return false;
+}
+
+bool Graph::ConnectFirstSwapped(Rib &r)
+{
+    if(IsCanBeConnectedFirstSwapped(r))
+    {
+        r.checked = true;
+
+        r.SwapPoints();
+
+        CurrentPoint = r.p2;
+
+        return true;
+    }
+
+    return false;
+}
+
+bool Graph::Connect(Rib &r)
+{
+    if(IsCanBeConnected(r))
+    {
+        r.checked = true;
+
+        CurrentPoint = r.p2;
+
+        return true;
+    }
+
+    return false;
+}
+
+bool Graph::ConnectSwapped(Rib &r)
+{
+    if(IsCanBeConnectedSwapped(r))
+    {
+        r.checked = true;
+
+        r.SwapPoints();
+
+        CurrentPoint = r.p2;
+
+        return true;
+    }
+
+    return false;
+}
+
+bool Graph::IsFull()
+{
+    for(int i=0;i<Ribs.size();i++) if(Ribs[i].checked == false) return false;
+    return true;
+}
+
+bool Graph::IsContainsAllOneWayRibs()
+{
+    int ct = 0;
+
+    for(int i=0;i<OneWayRibs.size();i++) for(int j=0;j<Path.size();j++) if(AreEqualRibs(OneWayRibs[i],Path[j])) ct++;
+
+    return ct == OneWayRibs.size();
+}
+
+Graph g;
+
+vector <Graph> Matrix;
+
+void Try(Graph g)
+{
+    int step = 0;
+    Graph g1;
+    Matrix.push_back(g);
+
+    while(step < Matrix.size())
+    {
+        for(int i=0;i<Matrix[step].Ribs.size();i++)
+        {
+            g1 = Matrix[step];
+
+            if(g1.ConnectFirst(g1.Ribs[i]))
+            {
+                g1.Path.push_back(g1.Ribs[i]);
+
+                Matrix.push_back(g1);
+            }
+
+            g1 = Matrix[step];
+
+            if(g1.ConnectFirstSwapped(g1.Ribs[i]))
+            {
+                g1.Path.push_back(g1.Ribs[i]);
+
+                Matrix.push_back(g1);
+            }
+
+            g1 = Matrix[step];
+
+            if(g1.Connect(g1.Ribs[i]))
+            {
+                g1.Path.push_back(g1.Ribs[i]);
+
+                Matrix.push_back(g1);
+            }
+
+            g1 = Matrix[step];
+
+            if(g1.ConnectSwapped(g1.Ribs[i]))
+            {
+                g1.Path.push_back(g1.Ribs[i]);
+
+                Matrix.push_back(g1);
+            }
+        }
+
+        step++;
+    }
+}
+
+void HouseWithCross()
+{
+    g.AddRib(1,2); ///               1
+    g.AddRib(1,3); ///               *
+    g.AddRib(2,3); ///             *   *
+    g.AddRib(2,4); ///           2*******3
+    g.AddRib(4,5); ///            * * * *
+    g.AddRib(3,5); ///            *  *  *
+    g.AddRib(2,5); ///            * * * *
+    g.AddRib(3,4); ///           4*******5
+}
+
+void Solve()
+{
+    int solutions = 0;
+
+    HouseWithCross();
+
+    Try(g);
+
+    for(int i=0;i<Matrix.size();i++) if(Matrix[i].IsFull() and Matrix[i].IsContainsAllOneWayRibs()) {Matrix[i].PrintPathPoints(); solutions++; cout<<endl;}
+
+    cout<<endl;
+
+    cout<<"Number of solutions: "<<solutions<<endl;
+}
+
+int main()
+{
+    Solve();
+    return 0;
+}
+
